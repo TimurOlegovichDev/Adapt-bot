@@ -21,8 +21,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     final BotConfig config;
 
-    boolean waiting = false;
-
     public TelegramBot(BotConfig config) {
         this.config = config;
     }
@@ -39,25 +37,23 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public void onUpdateReceived(Update update) {
         Message message = update.getMessage();
-        if (message != null) {
-            if (message.getText().equals("/start"))
-                greeting(update);
-            else if (update.getCallbackQuery() != null)
-                switch (update.getCallbackQuery().getData()) {
-                    case "start" -> start(update);
-                    case "about" -> getInfoAboutCompany(update);
-                    case "moreinfo" -> getMoreInfoAboutCompany(update);
-                    case "site" -> getSite(update);
-                    case "documents" -> getDocuments(update);
-                    case "address" -> getAddress(update);
-                    case "contact" -> getContact(update);
-                    case "allbuttons" -> getAllButtons(update);
-                }
-            else
-                sendMessage(message.getChatId(), null, "Мой \uD83E\uDDE0 пока не готов принимать такие команды☹");
-        }
-        waiting=false;
-        System.out.println("Ник:\t" + update.getMessage().getChat().getUserName() + " Чат ID:\t" + update.getMessage().getChatId() + "Сообщение ID\t" + update.getMessage().getMessageId());
+        if (message != null && message.getText().equals("/start"))
+            greeting(update);
+        else if (update.hasCallbackQuery())
+            switch (update.getCallbackQuery().getData()) {
+                case "start" -> start(update);
+                case "about" -> getInfoAboutCompany(update);
+                case "moreinfo" -> getMoreInfoAboutCompany(update);
+                case "site" -> getSite(update);
+                case "documents" -> getDocuments(update);
+                case "address" -> getAddress(update);
+                case "contact" -> getContact(update);
+                case "allbuttons" -> getAllButtons(update);
+            }
+        else
+            if(message != null) sendMessage(message.getChatId(), null, "Мой \uD83E\uDDE0 пока не готов принимать такие команды☹");
+        if (message != null)
+            System.out.println("Ник: " + update.getMessage().getChat().getUserName() + "\t Чат ID: " + update.getMessage().getChatId() + "\t Сообщение ID: " + update.getMessage().getMessageId());
     }
 
     private void greeting(Update update) {
@@ -71,7 +67,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         rowInline.add(button);
         rowsInline.add(rowInline);
         markupInline.setKeyboard(rowsInline);
-        String photoPath = "src/main/resources/MainPhoto.jpg";
+        String photoPath = "https://static.tildacdn.com/tild6437-3032-4532-a439-366238353634/___.png";
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
         sendPhoto.setPhoto(new InputFile(photoPath));
@@ -80,12 +76,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             execute(sendPhoto);
         } catch (TelegramApiException e) {
-            System.err.println("Ошибка при отправки фото");
+            System.err.println("Ошибка при отправки фото " + e.getMessage());
         }
     }
 
     private void start(Update update) {
-        long chatId = update.getMessage().getChatId();
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
@@ -95,19 +91,23 @@ public class TelegramBot extends TelegramLongPollingBot {
         rowInline.add(button);
         rowsInline.add(rowInline);
         markupInline.setKeyboard(rowsInline);
-        if(update.getMessage().getChat().getUserName().equals("username"))
+        if (!update.getCallbackQuery().getFrom().getUserName().equals("username"))
             sendMessage(chatId,
-                markupInline,
-                "Так-так \uD83E\uDD14, ваш никнейм - " + update.getMessage().getText() + ", записал\uD83D\uDCDD");
+                    markupInline,
+                    "Так-так \uD83E\uDD14, ваш никнейм - " + update.getCallbackQuery().getFrom().getUserName() + ", записал\uD83D\uDCDD");
+        else
+            sendMessage(chatId,
+                    markupInline,
+                    "Так-так \uD83E\uDD14, ваш никнейм скрыт, в графе имя ставлю прочерк)\uD83D\uDCDD");
     }
 
     private void getInfoAboutCompany(Update update) {
-        long chatId = update.getMessage().getChatId();
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("Здорово\uD83D\uDC4D, а чем занимается компания❓");
+        button.setText("Здорово\uD83D\uDC4D");
         button.setCallbackData("moreinfo");
         rowInline.add(button);
         rowsInline.add(rowInline);
@@ -118,12 +118,12 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void getMoreInfoAboutCompany(Update update) {
-        long chatId = update.getMessage().getChatId();
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("Интересно, но давай ближе к делу✅");
+        button.setText("Круто, но давай ближе к делу✅");
         button.setCallbackData("site");
         rowInline.add(button);
         rowsInline.add(rowInline);
@@ -134,12 +134,12 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void getSite(Update update) {
-        long chatId = update.getMessage().getChatId();
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("\uD83D\uDCD4Какие документы мне понадобятся❓");
+        button.setText("\uD83D\uDCD4Какие документы мне нужны❓");
         button.setCallbackData("documents");
         rowInline.add(button);
         rowsInline.add(rowInline);
@@ -152,7 +152,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void getDocuments(Update update) {
-        long chatId = update.getMessage().getChatId();
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
@@ -164,11 +164,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         markupInline.setKeyboard(rowsInline);
         sendMessage(chatId,
                 markupInline,
-                MessageText.MORE_ABOUT_COMPANY.getText());
+                MessageText.DOCUMENTS.getText());
     }
 
     private void getAddress(Update update) {
-        long chatId = update.getMessage().getChatId();
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
@@ -180,11 +180,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         markupInline.setKeyboard(rowsInline);
         sendMessage(chatId,
                 markupInline,
-                MessageText.MORE_ABOUT_COMPANY.getText());
+                MessageText.ADDRESS.getText());
     }
 
     private void getContact(Update update) {
-        long chatId = update.getMessage().getChatId();
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
         String phoneNumber = "+79127699631"; // replace with the phone number you want to send
         String firstName = "Юлия"; // replace with the first name you want to send
         String lastName = "Васильевна"; // replace with the last name you want to send
@@ -213,65 +213,70 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void getAllButtons(Update update) {
-        long chatId = update.getMessage().getChatId();
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
 
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
 
-        InlineKeyboardButton button = new InlineKeyboardButton();
+        // Row 1
+        List<InlineKeyboardButton> rowInline1 = new ArrayList<>();
+        InlineKeyboardButton button1 = new InlineKeyboardButton();
+        button1.setText("\uD83C\uDF3FРасскажи о компании\uD83E\uDDD0");
+        button1.setCallbackData("about");
+        rowInline1.add(button1);
 
-        button.setText("\uD83C\uDF3FРасскажи о компании\uD83E\uDDD0");
-        button.setCallbackData("about");
-        rowInline.add(button);
+        InlineKeyboardButton button2 = new InlineKeyboardButton();
+        button2.setText("Чем занимается компания❓");
+        button2.setCallbackData("moreinfo");
+        rowInline1.add(button2);
 
-        button.setText("Чем занимается компания❓");
-        button.setCallbackData("moreinfo");
-        rowInline.add(button);
+        rowsInline.add(rowInline1);
 
-        rowsInline.add(rowInline);
+        // Row 2
+        List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
+        InlineKeyboardButton button3 = new InlineKeyboardButton();
+        button3.setText("\uD83D\uDCBBСсылка на сайт\uD83D\uDCBB");
+        button3.setCallbackData("site");
+        rowInline2.add(button3);
 
+        InlineKeyboardButton button4 = new InlineKeyboardButton();
+        button4.setText("\uD83D\uDCDAСписок документов\uD83D\uDCDA");
+        button4.setCallbackData("documents");
+        rowInline2.add(button4);
 
-        button.setText("\uD83D\uDCBBСсылка на сайт\uD83D\uDCBB");
-        button.setCallbackData("site");
-        rowInline.add(button);
+        rowsInline.add(rowInline2);
 
-        button.setText("\uD83D\uDCDAСписок документов\uD83D\uDCDA");
-        button.setCallbackData("documents");
-        rowInline.add(button);
+        // Row 3
+        List<InlineKeyboardButton> rowInline3 = new ArrayList<>();
+        InlineKeyboardButton button5 = new InlineKeyboardButton();
+        button5.setText("Напомни адрес\uD83E\uDD14");
+        button5.setCallbackData("address");
+        rowInline3.add(button5);
 
-        rowsInline.add(rowInline);
+        InlineKeyboardButton button6 = new InlineKeyboardButton();
+        button6.setText("С кем я могу связаться❓");
+        button6.setCallbackData("contact");
+        rowInline3.add(button6);
 
-
-        button.setText("Напомни адрес\uD83E\uDD14");
-        button.setCallbackData("address");
-        rowInline.add(button);
-
-        button.setText("С кем я могу связаться❓");
-        button.setCallbackData("contact");
-        rowInline.add(button);
-
-        rowsInline.add(rowInline);
+        rowsInline.add(rowInline3);
 
         markupInline.setKeyboard(rowsInline);
-        sendMessage(chatId,
-                markupInline,
-                "Вот мои команды, пользуйся в любое время\uD83D\uDE0E \n");
+        sendMessage(chatId, markupInline, "Вот мои команды, пользуйся в любое время\uD83D\uDE0E \n");
     }
 
     public void sendMessage(long chatID, InlineKeyboardMarkup button, String answerText) {
-        if (answerText != null) {
-            SendMessage message = new SendMessage();
-            message.setChatId(String.valueOf(chatID));
-            message.setText(answerText);
-            if(button!=null)
-                message.setReplyMarkup(button);
-            message.enableMarkdown(true);
-            try {
-                execute(message);
-            } catch (TelegramApiException error) {
-                System.out.println("Ошибка отправки сообщения");
-            }
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatID));
+        message.setText(answerText);
+        if (button != null)
+            message.setReplyMarkup(button);
+        message.enableMarkdown(true);
+        message.disableWebPagePreview();
+        try {
+            execute(message);
+        } catch (TelegramApiException error) {
+            System.out.println("Ошибка отправки сообщения " + error.getMessage());
         }
+
     }
 }
